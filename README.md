@@ -6,4 +6,4 @@
 [![Build Android](https://github.com/tejmagar/video-to-photo-capture/actions/workflows/build-android.yml/badge.svg)](https://github.com/tejmagar/video-to-photo-capture/actions/workflows/build-android.yml)
 
 
-Vibe coded application to extract perfect photo frame from from video.
+Vibe coded application to extract perfect photo frame from the video.
