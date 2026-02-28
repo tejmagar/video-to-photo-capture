@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-android:
-    runs-on: Ubuntu
+    runs-on: ubuntu-latest
     env:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
