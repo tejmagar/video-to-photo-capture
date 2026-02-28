@@ -1,0 +1,6 @@
+include ':app'
+
+apply from: 'tauri.settings.gradle'
+
+include ':nativeandroid_ext'
+project(':nativeandroid_ext').projectDir = new File('../../plugins/native-android-ext/nativeandroid_ext')

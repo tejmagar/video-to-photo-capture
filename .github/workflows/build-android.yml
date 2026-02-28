@@ -1,0 +1,58 @@
+name: Build Android
+permissions:
+  contents: write
+
+on:
+  workflow_run:
+    workflows: ["Test Build"]
+    types:
+      - completed
+
+jobs:
+  build-android:
+    runs-on: Ubuntu
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Keystore Base64
+        run: |
+          if [[ "$KEYSTORE_BASE64" =~ [^A-Za-z0-9+/=] ]]; then
+                echo "ERROR: KEYSTORE_BASE64 contains invalid characters or newlines!"
+                exit 1
+          fi
+
+          echo "Validating KEYSTORE_BASE64..."
+          if ! echo "$KEYSTORE_BASE64" | base64 --decode > /dev/null 2>&1; then
+            echo "ERROR: KEYSTORE_BASE64 is not valid Base64!"
+            exit
+          fi
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y docker-compose
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build Android
+        run: |
+          docker compose build && docker compose run --rm build-apps
+
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tg0.1.${{ github.run_number }}
+          name: Release build apk tg0.1.${{ github.run_number }}
+          files: |
+            src-tauri/builds/outputs/apk/universal/release/app-universal-release.apk
+            src-tauri/builds/outputs/bundle/universalRelease/app-universal-release.aab

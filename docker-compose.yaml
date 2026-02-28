@@ -1,0 +1,10 @@
+services:
+  build-apps:
+    build: .
+    environment:
+      - KEYSTORE_BASE64=${KEYSTORE_BASE64}
+      - KEYSTORE_ALIAS=${KEYSTORE_ALIAS}
+      - KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD}
+      - KEY_PASSWORD=${KEY_PASSWORD}
+    volumes:
+      - "./src-tauri/builds/:/app/src-tauri/builds/"

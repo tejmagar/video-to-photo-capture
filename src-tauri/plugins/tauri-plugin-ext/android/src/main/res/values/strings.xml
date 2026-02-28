@@ -1,0 +1,4 @@
+<resources>
+    <string name="api_base_url"></string>
+    <string name="zegocloud_app_id">426603441</string>
+</resources>
