@@ -1,7 +1,9 @@
-# Tauri + Vanilla TS
+# Video to photo capture
 
-This template should help get you started developing with Tauri in vanilla HTML, CSS and Typescript.
 
-## Recommended IDE Setup
+[![Test Build](https://github.com/tejmagar/video-to-photo-capture/actions/workflows/test-build.yml/badge.svg)](https://github.com/tejmagar/video-to-photo-capture/actions/workflows/test-build.yml)
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+[![Build Android](https://github.com/tejmagar/video-to-photo-capture/actions/workflows/build-android.yml/badge.svg)](https://github.com/tejmagar/video-to-photo-capture/actions/workflows/build-android.yml)
+
+
+Vibe coded application to extract perfect photo frame from from video.
