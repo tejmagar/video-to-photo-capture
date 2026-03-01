@@ -54,6 +54,17 @@ function base64ToBytes(b64: string): Uint8Array {
   return bytes;
 }
 
+function dataUrlToUint8Array(dataUrl: string): Uint8Array {
+  const base64 = dataUrl.split(",")[1]; // remove "data:*/*;base64,"
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
 // ── Unified save entry-point ─────────────────────────────────────
 
 /**
@@ -79,10 +90,11 @@ async function saveFrame(
     // ── Android: MediaStore via gallery-plugin ───────────────────
     // Convert to a plain number[] so Tauri IPC serialises it as a
     // JSON byte array — the Kotlin plugin reads it as ByteArray directly.
-    await invoke("plugin:ext|save-to-gallery", {
+    const res = await invoke("plugin:ext|save-to-gallery", {
       fileName,
-      bytes: Array.from(base64ToBytes(dataUrlToBase64(dataUrl))),
+      bytes: Array.from(dataUrlToUint8Array(dataUrl)),
     });
+    console.log(res);
   } else if (isTauri()) {
     // ── Desktop Tauri: write to Pictures/VideoCaptures/ ──────────
     const { writeFile, BaseDirectory, exists, mkdir } =
