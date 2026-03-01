@@ -182,6 +182,7 @@ const zoomLabel = document.getElementById("zoom-label") as HTMLElement;
 // ── State ────────────────────────────────────────────────────────
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 let overlayTimer: ReturnType<typeof setTimeout> | null = null;
+let currentObjectUrl: string | null = null;
 
 // Preview state
 let previewDataUrl: string | null = null;
@@ -640,7 +641,14 @@ changeBtn.addEventListener("click", resetToUpload);
 
 function resetToUpload(): void {
   video.pause();
-  video.src = "";
+  // Properly abort any pending load — setting src="" tries to load an invalid
+  // URL and fires a MediaError; removeAttribute + load() cleanly resets instead.
+  video.removeAttribute("src");
+  video.load();
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
   playerSection.hidden = true;
   uploadSection.hidden = false;
   fileInput.value = "";
@@ -681,15 +689,22 @@ dropZone.addEventListener("drop", (e: DragEvent) => {
 });
 
 function loadFile(file: File): void {
+  // Revoke the previous blob URL before creating a new one to avoid leaking
+  // memory — especially important on Android where unreleased URLs accumulate.
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
   const url = URL.createObjectURL(file);
+  currentObjectUrl = url;
   video.src = url;
   video.load();
   filenameLabel.textContent = file.name;
 
   uploadSection.hidden = true;
   playerSection.hidden = false;
-
-  video.addEventListener("loadedmetadata", updateTimeUI, { once: true });
+  // Note: the permanent "loadedmetadata" listener above already calls
+  // updateTimeUI and resets the seek bar, so no extra once-listener needed.
 }
 
 // lastTouchMidX / lastTouchMidY are written during pinch tracking; the
