@@ -271,6 +271,16 @@ video.addEventListener("play", () => setPlayIcon(true));
 video.addEventListener("pause", () => setPlayIcon(false));
 video.addEventListener("ended", () => setPlayIcon(false));
 
+video.addEventListener("error", () => {
+  const err = video.error;
+  // Code 1 (MEDIA_ERR_ABORTED) fires on intentional src clears — ignore it.
+  if (err && err.code !== MediaError.MEDIA_ERR_ABORTED) {
+    console.error("Video error:", err.message);
+    showToast("Video error — try reloading the file", "error");
+    setPlayIcon(false);
+  }
+});
+
 // ── Seek bar ─────────────────────────────────────────────────────
 seekBar.addEventListener("input", () => {
   const t = (Number(seekBar.value) / 1000) * (video.duration || 0);
@@ -283,7 +293,14 @@ playBtn.addEventListener("click", togglePlay);
 
 function togglePlay(): void {
   if (video.paused || video.ended) {
-    void video.play();
+    video.play().catch((err: unknown) => {
+      // AbortError is expected when pause()/seek interrupts a pending play() —
+      // it is not a real error, so only surface anything else.
+      if ((err as DOMException).name !== "AbortError") {
+        console.error("Playback failed:", err);
+        showToast("Playback failed", "error");
+      }
+    });
   } else {
     video.pause();
   }
@@ -362,7 +379,8 @@ interface CaptureResult {
 function captureCurrentFrame(): CaptureResult | null {
   const w = video.videoWidth;
   const h = video.videoHeight;
-  if (!w || !h) return null;
+  // readyState < 2 (HAVE_CURRENT_DATA) means there is no decoded frame yet.
+  if (!w || !h || video.readyState < 2) return null;
   canvas.width = w;
   canvas.height = h;
   (canvas.getContext("2d") as CanvasRenderingContext2D).drawImage(
@@ -372,7 +390,15 @@ function captureCurrentFrame(): CaptureResult | null {
     w,
     h,
   );
-  return { dataUrl: canvas.toDataURL("image/jpeg", 0.95), w, h };
+  try {
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    return { dataUrl, w, h };
+  } catch (err) {
+    // SecurityError: canvas is tainted (cross-origin or failed video source).
+    console.error("Canvas export failed:", err);
+    showToast("Cannot capture frame — video source error", "error");
+    return null;
+  }
 }
 
 // ── Preview frame ────────────────────────────────────────────────
@@ -665,7 +691,12 @@ dropZone.addEventListener("keydown", (e: KeyboardEvent) => {
 });
 
 fileInput.addEventListener("change", () => {
-  if (fileInput.files?.length) loadFile(fileInput.files[0]);
+  if (fileInput.files?.length) {
+    loadFile(fileInput.files[0]).catch((err: unknown) => {
+      console.error("Failed to load file:", err);
+      showToast("Failed to load video", "error");
+    });
+  }
 });
 
 dropZone.addEventListener("dragover", (e: DragEvent) => {
@@ -682,20 +713,32 @@ dropZone.addEventListener("drop", (e: DragEvent) => {
   dropZone.classList.remove("dragover");
   const file = e.dataTransfer?.files[0];
   if (file && file.type.startsWith("video/")) {
-    loadFile(file);
+    loadFile(file).catch((err: unknown) => {
+      console.error("Failed to load file:", err);
+      showToast("Failed to load video", "error");
+    });
   } else {
     showToast("Please drop a video file", "error");
   }
 });
 
-function loadFile(file: File): void {
+async function loadFile(file: File): Promise<void> {
   // Revoke the previous blob URL before creating a new one to avoid leaking
   // memory — especially important on Android where unreleased URLs accumulate.
   if (currentObjectUrl) {
     URL.revokeObjectURL(currentObjectUrl);
     currentObjectUrl = null;
   }
-  const url = URL.createObjectURL(file);
+
+  // Read the entire file into memory before creating the blob URL.
+  // createObjectURL(File) keeps a live reference to the file on disk; on
+  // Android (Tauri) that content-provider URI goes stale after a short time
+  // and the video dies with ERR_UPLOAD_FILE_CHANGED.  Using an in-memory Blob
+  // avoids this entirely — the URL can never go stale.
+  const arrayBuffer = await file.arrayBuffer();
+  const blob = new Blob([arrayBuffer], { type: file.type || "video/mp4" });
+
+  const url = URL.createObjectURL(blob);
   currentObjectUrl = url;
   video.src = url;
   video.load();
