@@ -7,3 +7,5 @@
 
 
 Vibe coded application to extract perfect photo frame from the video.
+
+Binaries for other platforms will be available soon.
