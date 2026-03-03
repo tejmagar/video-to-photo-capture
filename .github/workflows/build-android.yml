@@ -53,6 +53,4 @@ jobs:
         with:
           tag_name: tg0.1.${{ github.run_number }}
           name: Release build apk tg0.1.${{ github.run_number }}
-          files: |
-            src-tauri/builds/outputs/apk/universal/release/app-universal-release.apk
-            src-tauri/builds/outputs/bundle/universalRelease/app-universal-release.aab
+          files: src-tauri/builds/*

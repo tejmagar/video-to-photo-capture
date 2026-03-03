@@ -8,3 +8,17 @@ services:
       - KEY_PASSWORD=${KEY_PASSWORD}
     volumes:
       - "./src-tauri/builds/:/app/src-tauri/builds/"
+
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        npm run tauri build
+        find src-tauri/target/release/bundle -type f \
+              \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) \
+              -exec cp -t src-tauri/builds/ {} +
+
+        npm run tauri android build
+        cp src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/builds/
+        cp src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab src-tauri/builds/

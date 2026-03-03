@@ -5,6 +5,7 @@ ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
 RUN apt-get update && apt-get install -y \
+    xdg-utils \
     build-essential \
     pkg-config \
     cmake \
