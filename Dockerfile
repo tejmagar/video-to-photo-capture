@@ -43,7 +43,7 @@ RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest \
 
 # Accept licenses and install platform + NDK
 RUN yes | sdkmanager --licenses
-RUN sdkmanager "platform-tools" "platforms;android-34" "ndk;25.2.9519653"
+RUN sdkmanager "platform-tools" "platforms;android-34" "ndk;28.0.12433566"
 
 WORKDIR /app
 
